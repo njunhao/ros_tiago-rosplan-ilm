@@ -1,0 +1,8 @@
+uint8 RESET = 0
+uint8 APPEND = 1
+uint8 TMP = 2
+
+string type_name
+uint8 operand
+---
+int32 count

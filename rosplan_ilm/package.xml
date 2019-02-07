@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+	<name>rosplan_ilm</name>
+	<version>0.0.0</version>
+	<description>The rosplan_ilm package</description>
+	<maintainer email="alvin.ng@ed.ac.uk">Alvin Ng</maintainer>
+	<license>BSD</license>
+	<url type="website">https://github.com/KCL-Planning/ROSPlan</url>
+
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<build_depend>roscpp</build_depend>
+	<build_depend>rosplan_dispatch_msgs</build_depend>
+	<build_depend>rosplan_knowledge_msgs</build_depend>
+  	<build_depend>diagnostic_msgs</build_depend>
+  	<build_depend>rosplan_ilm_msgs</build_depend>
+  	<build_depend>std_srvs</build_depend>
+
+  	<run_depend>roscpp</run_depend>
+	<run_depend>python-rospkg</run_depend>
+	<run_depend>rosplan_dispatch_msgs</run_depend>
+	<run_depend>rosplan_knowledge_msgs</run_depend>
+	<run_depend>diagnostic_msgs</run_depend>
+	<run_depend>rosplan_ilm_msgs</run_depend>
+	<run_depend>std_srvs</run_depend>
+
+	<export></export>
+</package>

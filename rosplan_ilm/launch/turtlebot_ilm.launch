@@ -1,0 +1,112 @@
+<!-- ROSPlan rexd interface launch; requires turtlebot_gazebo -->
+<launch>
+	<arg name="domain_path"				default="$(find rosplan_ilm)/common/domain_turtlebot.ppddl" />
+	<arg name="problem_path"			default="$(find rosplan_ilm)/common/problem.pddl" />
+
+	<arg name="rviz"					default="false"/>
+	<arg name="gzclient"				default="false"/>	
+
+	<arg name="use_ilm"					default="true" />
+	<arg name="use_planner"				default="false" />
+	<arg name="use_sim_action"			default="false" />
+	
+	<arg name="action_dispatch_topic"	default="/rosplan_plan_dispatcher/action_dispatch" />
+	<arg name="action_feedback_topic"	default="/rosplan_plan_dispatcher/action_feedback" />
+	<arg name="costmap_topic"			default="/move_base/global_costmap/costmap"/>
+	<arg name="detector_topic"			default="/person_detector/detections" />
+	<arg name="pose_topic"				default="/amcl_pose" />
+	<arg name="knowledge_base"			default="rosplan_knowledge_base" />
+
+	<arg name="port_no"					default="26550" />
+	<!-- <arg name="host"					default="192.168.0.27" /> -->
+	<arg name="host"					default="192.168.1.229" />
+	<!-- <arg name="host"					default="137.195.109.173" /> -->
+
+
+	<!-- turtlebot simulation -->
+	<include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch" if="$(arg gzclient)" />
+	<include file="$(find turtlebot_gazebo)/launch/amcl_demo.launch" if="$(arg gzclient)" />
+
+	<!-- visualisation -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find rosplan_demos)/rviz/turtlebot.rviz" if="$(arg rviz)" />
+
+
+	<!-- ROSPlan -->
+	<include file="$(find rosplan_ilm)/launch/interfaced_planning_system.launch">
+		<arg name="use_planner"       value="$(arg use_planner)" />
+		<arg name="planning_language" value="PPDDL" /> <!-- Can be RDDL, PPDDL or PDDL -->
+		<arg name="domain_path"		  value="$(arg domain_path)" />
+		<arg name="problem_path"	  value="$(arg problem_path)" />
+		<!-- <arg name="planner_command"   value="timeout 10 $(find rosplan_planning_system)/common/bin/prost/run_prost_online.sh DOMAIN PROBLEM [IPPC2014] output.txt" /> -->
+		<!-- <arg name="planner_interface" value="rddlsim_planner_interface" /> -->
+		<!-- <arg name="parsing_type"	  value="pddl_simple_plan_dispatcher" /> -->
+		<!-- <arg name="parsing_type"	  value="pddl_esterel_plan_parser" /> -->
+	</include>
+
+
+	<include file="$(find rosplan_ilm)/launch/rexd_client.launch" if="$(arg use_ilm)">
+		<arg name="port_no"        		  value="$(arg port_no)" />
+		<arg name="host"				  value="$(arg host)" />
+		<arg name="problem_topic"         value="/rosplan_problem_interface/problem_instance" />
+		<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+		<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		<arg name="data_path"             value="$(find rosplan_ilm)/common/" />
+		<arg name="parser_path"           value="$(find rosplan_ilm)/src/TCP/rexd_parser.py" />
+		<arg name="domain_path"		  	  value="$(arg domain_path)" />
+		<arg name="problem_path"	  	  value="$(arg problem_path)" />
+		<arg name="source_path"	  		  value="/media/alvin/HDD/Academics/PhD/Coding/Planners/rex-d/scenarios/current/" />
+	</include>
+
+	<!-- roadmap -->
+	<include file="$(find rosplan_interface_mapping)/launch/rosplan_roadmap_server.launch" />
+
+
+	<!-- state monitor (remove localised fact if AMCL covariance is high) -->
+	<node name="rosplan_state_monitor" pkg="rosplan_ilm" type="rpstatemonitor" respawn="false" output="screen">
+		<param name="robot" value="kenny" />
+		<param name="knowledge_base" value="rosplan_knowledge_base" />
+		<param name="pose_topic" value="/amcl_pose" />
+		<param name="check_localisation" value="false" />
+	</node>
+
+
+	<!-- movebase interface -->
+<!-- 	<node name="rosplan_interface_movebase" pkg="rosplan_interface_movebase" type="rpmovebase" respawn="false" output="screen">
+		<param name="knowledge_base" value="rosplan_knowledge_base" />
+		<param name="action_server" value="/move_base" />
+		<param name="pddl_action_name" value="goto_waypoint" />
+		<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+		<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+	</node> -->
+
+	<!-- localise interface -->
+<!-- 	<node name="rosplan_interface_localise" pkg="rosplan_interface_ext_action" type="rplocalise" respawn="false" output="screen">
+		<param name="knowledge_base" value="rosplan_knowledge_base" />
+		<param name="pddl_action_name" value="localise" />
+		<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+		<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		<param name="cmd_vel_topic" value="/mobile_base_controller/cmd_vel" />
+		<param name="pose_topic" value="/amcl_pose" />
+	</node> -->
+
+
+	<!-- sim actions -->
+	<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+		<arg name="pddl_action_name" value="undock" />
+		<arg name="action_duration"		value="3" />
+		<!-- <arg name="action_probability"	value="0.5" /> -->
+	</include>
+	<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+		<arg name="pddl_action_name" value="dock" />
+		<arg name="action_duration"		value="3" />
+		<!-- <arg name="action_probability"	value="0.5" /> -->
+	</include>
+	<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+		<arg name="pddl_action_name" value="localise" />
+		<arg name="action_duration"		value="3" />
+	</include>
+	<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+		<arg name="pddl_action_name" value="goto_waypoint" />
+		<arg name="action_duration"		value="3" />
+	</include>
+</launch>

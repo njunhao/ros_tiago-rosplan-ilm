@@ -1,0 +1,26 @@
+<!-- ROSPlan rexd client launch -->
+<launch>
+	<arg name="port_no"        			default="26550" />
+	<arg name="host"           			default="192.168.0.27" />
+	<arg name="problem_topic"        	default="/rosplan_problem_interface/problem_instance" />
+	<arg name="action_dispatch_topic"   default="/rosplan_plan_dispatcher/action_dispatch" />
+	<arg name="action_feedback_topic"   default="/rosplan_plan_dispatcher/action_feedback" />
+	<arg name="data_path"            	default="$(find rosplan_ilm)/common/" />
+	<arg name="parser_path"            	default="$(find rosplan_ilm)/src/TCP/rexd_parser.py" />
+	<arg name="domain_path"		  		default="$(find rosplan_ilm)/common/domain_ilm.ppddl" />
+	<arg name="problem_path"	  		default="$(find rosplan_ilm)/common/problem_ilm.pddl" />
+	<arg name="source_path"		  		default="/media/alvin/HDD/Academics/PhD/Coding/Planners/rex-d/scenarios/current/" />
+
+	<node name="rosplan_rexd_client" pkg="rosplan_ilm" type="rexd_client" respawn="true" output="screen" required="false">  <!-- set required to true and roscore will terminate if this node is killed, set respawn to true so that node is always respawned when fail to connect to TCP -->
+		<param name="port_no"        		value="$(arg port_no)" />
+		<param name="host"           		value="$(arg host)" />
+		<param name="problem_topic"        	value="$(arg problem_topic)" />
+		<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+		<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		<param name="data_path"             value="$(arg data_path)" />
+		<param name="parser_path"           value="$(arg parser_path)" />
+		<param name="domain_path"		  	value="$(arg domain_path)" />
+		<param name="problem_path"	  		value="$(arg problem_path)" />
+		<param name="source_path"			value="$(arg source_path)" />
+	</node>
+</launch>

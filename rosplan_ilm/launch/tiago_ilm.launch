@@ -1,0 +1,316 @@
+<!-- ROSPlan rexd interface launch; requires turtlebot_gazebo -->
+<launch>	
+	<arg name="domain_path"				default="$(find rosplan_interface_tiago)/common/domain_tiago.ppddl" />
+	<!-- <arg name="problem_path"			default="$(find rosplan_interface_tiago)/common/problem_tiago.pddl" /> -->
+	<arg name="problem_path"			default="$(find rosplan_ilm)/common/problem.pddl" />
+
+	<arg name="world" 					default="demo_office"/>
+	<arg name="map"						default="$(find rosplan_interface_tiago)/maps/configurations/$(arg world)"/>
+	<arg name="rviz"					default="false"/>
+	<arg name="gzclient"				default="true"/>
+
+	<arg name="waypoint_file"			default="waypoints_start_at_top_right"/>
+	<arg name="gzpose"					default="-x -2.2 -y 7.5 -z 0 -R 0.0 -P 0.0 -Y 0.0"/>
+
+	<!-- <arg name="waypoint_file"			default="waypoints_start_at_origin"/> -->
+	<!-- <arg name="gzpose"					default="-x 0 -y 0 -z 0 -R 0.0 -P 0.0 -Y 0.0"/> -->
+
+	<!-- pose to pickup object 1 -->
+	<!-- <arg name="gzpose"					default="-x -3.5 -y 7.8 -z 0 -R 0.0 -P 0.0 -Y 3.14159"/> -->
+	
+
+	<arg name="use_ilm"					default="true" />
+	<arg name="use_planner"				default="false" />
+	<arg name="use_sim_action"			default="false" />
+	
+	<arg name="action_dispatch_topic"	default="/rosplan_plan_dispatcher/action_dispatch" />
+	<arg name="action_feedback_topic"	default="/rosplan_plan_dispatcher/action_feedback" />
+	<arg name="costmap_topic"			default="/move_base/global_costmap/costmap"/>
+	<arg name="detector_topic"			default="/person_detector/detections" />
+	<arg name="pose_topic"				default="/amcl_pose" />
+	<arg name="knowledge_base"			default="rosplan_knowledge_base" />
+
+	<arg name="port_no"					default="26550" />
+	<!-- <arg name="host"					default="192.168.0.27" /> -->
+	<arg name="host"					default="192.168.1.229" />
+	<!-- <arg name="host"					default="137.195.109.173" /> -->
+
+
+	<include file="$(find rosplan_interface_tiago)/launch/navigation/tiago_navigation_public.launch">
+		<arg name="robot"			value="steel"/>
+		<arg name="world"			value="$(arg world)"/>
+		<arg name="map"				value="$(arg map)"/>
+		<arg name="rviz"			value="$(arg rviz)"/>
+		<arg name="gzclient"		value="$(arg gzclient)"/>
+		<arg name="localization"	value="amcl"/>
+		<arg name="gzpose"			value="$(arg gzpose)"/>
+		<arg name="recording"		value="false"/>
+	</include>
+
+
+	<!-- pick up and put down -->
+	<include file="$(find rosplan_interface_tiago)/launch/pick/pick_demo.launch">
+		<arg name="rviz"     		value="$(arg rviz)"/>
+	</include>
+
+
+<!-- 	<include file="$(find tiago_2dnav_gazebo)/launch/tiago_navigation_public.launch">
+		<arg name="robot"			value="steel"/>
+		<arg name="map"				value="$(arg map)"/>
+		<arg name="rviz"			value="$(arg rviz)"/>
+		<arg name="gzclient"		value="$(arg gzclient)"/>
+		<arg name="localization"	value="amcl"/>
+		<arg name="gzpose"			value="$(arg gzpose)"/>
+		<arg name="recording"		value="false"/>
+	</include> -->
+
+
+
+
+	<!-- ROSPlan -->
+	<include file="$(find rosplan_ilm)/launch/interfaced_planning_system.launch">
+		<arg name="use_planner"       value="$(arg use_planner)" />
+		<arg name="planning_language" value="PPDDL" /> <!-- Can be RDDL, PPDDL or PDDL -->
+		<arg name="domain_path"		  value="$(arg domain_path)" />
+		<arg name="problem_path"	  value="$(arg problem_path)" />
+		<!-- <arg name="planner_command"   value="timeout 10 $(find rosplan_planning_system)/common/bin/prost/run_prost_online.sh DOMAIN PROBLEM [IPPC2014] output.txt" /> -->
+		<!-- <arg name="planner_interface" value="rddlsim_planner_interface" /> -->
+		<!-- <arg name="parsing_type"	  value="pddl_simple_plan_dispatcher" /> -->
+		<!-- <arg name="parsing_type"	  value="pddl_esterel_plan_parser" /> -->
+	</include>
+
+
+	<include file="$(find rosplan_ilm)/launch/rexd_client.launch" if="$(arg use_ilm)">
+		<arg name="port_no"        		  value="$(arg port_no)" />
+		<arg name="host"				  value="$(arg host)" />
+		<arg name="problem_topic"         value="/rosplan_problem_interface/problem_instance" />
+		<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+		<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		<arg name="data_path"             value="$(find rosplan_ilm)/common/" />
+		<arg name="parser_path"           value="$(find rosplan_ilm)/src/TCP/rexd_parser.py" />
+		<arg name="domain_path"		  	  value="$(arg domain_path)" />
+		<arg name="problem_path"	  	  value="$(arg problem_path)" />
+		<arg name="source_path"	  		  value="/media/alvin/HDD/Academics/PhD/Coding/Planners/rex-d/scenarios/current/" />
+	</include>
+
+
+	<!-- roadmap (to import waypoints) -->
+	<node name="rosplan_roadmap_server" pkg="rosplan_interface_mapping" type="rpsimplemapServer" respawn="true" output="screen">
+		<param name="knowledge_base" value="$(arg knowledge_base)" />
+		<param name="data_path" value="$(find rosplan_planning_system)/common/" />
+		<param name="fixed_frame" value="map" />
+		<param name="waypoint_file" value="$(find rosplan_interface_tiago)/scripts/$(arg waypoint_file).txt" />
+	</node>
+
+
+	<!-- state monitor (remove localised fact if AMCL covariance is high) -->
+	<node name="rosplan_state_monitor" pkg="rosplan_ilm" type="rpstatemonitor" respawn="false" output="screen">
+		<param name="robot" value="r1" />
+		<param name="knowledge_base" value="$(arg knowledge_base)" />
+		<param name="pose_topic" value="$(arg pose_topic)" />
+		<param name="check_localisation" value="false" />
+	</node>
+
+
+	<group unless="$(arg use_sim_action)">
+		<!-- movebase interface -->
+		<node name="rosplan_interface_movebase" pkg="rosplan_interface_ext_action" type="rpmove" respawn="true" output="screen">
+			<param name="simulate" value="false" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/move_base" />
+			<param name="pddl_action_name" value="goto_waypoint" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		</node>
+
+
+		<!-- localise interface -->
+		<node name="rosplan_interface_localise" pkg="rosplan_interface_ext_action" type="rplocalise" respawn="true" output="screen">
+			<param name="simulate" value="false" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="pddl_action_name" value="localise" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="cmd_vel_topic" value="/mobile_base_controller/cmd_vel" />
+			<param name="pose_topic" value="$(arg pose_topic)" />
+		</node>
+
+
+		<!-- explore interface -->
+<!-- 		<node name="rosplan_interface_explore" pkg="rosplan_interface_ext_action" type="rpexplore" respawn="true" output="screen">
+			<param name="simulate" value="true" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/move_base" />
+			<param name="pddl_action_name" value="explore" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="preset_waypoints" value="$(find rosplan_interface_tiago)/scripts/exploration_path_$(arg world).txt" />
+		</node> -->
+		
+
+		<!-- find person interface -->
+		<node name="rosplan_interface_findperson" pkg="rosplan_interface_tiago" type="rpfindperson" respawn="true" output="screen">
+			<param name="simulate" value="false" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/move_base" />
+			<param name="pddl_action_name" value="find_person" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="preset_waypoints" value="$(find rosplan_interface_tiago)/scripts/exploration_path_$(arg world).txt" />
+			<param name="pose_topic" value="$(arg pose_topic)" />
+			<param name="detector_topic" value="$(arg detector_topic)" />
+			<param name="depth_image_topic" value="/xtion/depth_registered/image_raw" />
+			<param name="detection_image_topic" value="/rosplan_interface_findperson/image" />
+			<param name="camera_hfov" value="55" />
+			<param name="fixed_frame" value="map" />
+		</node>
+
+
+		<!-- ask person interface -->
+		<node name="rosplan_interface_askperson" pkg="rosplan_interface_tiago" type="rptalktoperson" respawn="true" output="screen">
+			<param name="simulate" value="true" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/ttsDUMMYSERVER" />
+			<param name="pddl_action_name" value="ask_person" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="detector_topic" value="$(arg detector_topic)" />
+			<param name="data_path" value="$(find rosplan_interface_tiago)/scripts/" />
+			<param name="speech_text" value="Hello, how may I help you?" />
+		</node>
+
+
+		<!-- ask person interface -->
+<!-- 		<node name="rosplan_interface_reportback" pkg="rosplan_interface_tiago" type="rptalktoperson" respawn="true" output="screen">
+			<param name="simulate" value="true" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/ttsDUMMYSERVER" />
+			<param name="pddl_action_name" value="report_back" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="detector_topic" value="$(arg detector_topic)" />
+			<param name="data_path" value="/" />
+			<param name="speech_text" value="Task completed." />
+		</node> -->
+
+
+		<!-- pickup interface -->
+		<node name="rosplan_interface_pickup" pkg="rosplan_interface_tiago" type="rpgrasp" respawn="true" output="screen">
+			<param name="simulate" value="true" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/pickup_pose" /> 
+			<param name="pddl_action_name" value="pick_up" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="grasp_topic" value="/pick_gui" />
+		</node>
+
+
+		<!-- putdown interface -->
+		<node name="rosplan_interface_putdown" pkg="rosplan_interface_tiago" type="rpgrasp" respawn="true" output="screen">
+			<param name="simulate" value="true" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/place_pose" /> 
+			<param name="pddl_action_name" value="put_down" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="grasp_topic" value="/place_gui" />
+		</node>
+
+
+		<!-- give interface -->
+		<node name="rosplan_interface_give" pkg="rosplan_interface_tiago" type="rpplaymotion" respawn="true" output="screen">
+			<param name="simulate" value="true" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/play_motion" /> 
+			<param name="pddl_action_name" value="give" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="motion_name" value="unfold_arm" />
+		</node>
+
+
+		<!-- take interface -->
+		<node name="rosplan_interface_take" pkg="rosplan_interface_tiago" type="rpplaymotion" respawn="true" output="screen">
+			<param name="simulate" value="true" />
+			<param name="knowledge_base" value="$(arg knowledge_base)" />
+			<param name="action_server" value="/play_motion" /> 
+			<param name="pddl_action_name" value="take" />
+			<param name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<param name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<param name="motion_name" value="unfold_arm" />
+		</node>
+	</group>
+
+
+	<!-- sim actions -->
+	<group if="$(arg use_sim_action)">
+		<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+			<arg name="pddl_action_name"	value="goto_waypoint" />
+			<arg name="knowledge_base"		value="$(arg knowledge_base)" />
+			<arg name="action_duration"		value="0.0" />
+			<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		</include>
+
+		<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+			<arg name="pddl_action_name"	value="localise" />
+			<arg name="knowledge_base"		value="$(arg knowledge_base)" />
+			<arg name="action_duration"		value="0.0" />
+			<arg name="action_probability"	value="0.9" />
+			<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		</include>
+
+		<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+			<arg name="pddl_action_name"	value="find_person" />
+			<arg name="knowledge_base"		value="$(arg knowledge_base)" />
+			<arg name="action_duration"		value="0.0" />
+			<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+			<arg name="distance_away" value="1.0" />
+		</include>
+
+		<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+			<arg name="pddl_action_name"	value="ask_person" />
+			<arg name="knowledge_base"		value="$(arg knowledge_base)" />
+			<arg name="action_duration"		value="0.0" />
+			<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		</include>
+
+		<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+			<arg name="pddl_action_name"	value="pick_up" />
+			<arg name="knowledge_base"		value="$(arg knowledge_base)" />
+			<arg name="action_duration"		value="0.0" />
+			<arg name="action_probability"	value="0.6" />
+			<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		</include>
+
+		<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+			<arg name="pddl_action_name"	value="put_down" />
+			<arg name="knowledge_base"		value="$(arg knowledge_base)" />
+			<arg name="action_duration"		value="0.0" />
+			<arg name="action_probability"	value="0.6" />
+			<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		</include>
+
+		<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+			<arg name="pddl_action_name"	value="give" />
+			<arg name="knowledge_base"		value="$(arg knowledge_base)" />
+			<arg name="action_duration"		value="0.0" />
+			<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		</include>
+
+		<include file="$(find rosplan_ilm)/launch/includes/simulated_action.launch" >
+			<arg name="pddl_action_name" 	value="take" />
+			<arg name="knowledge_base"		value="$(arg knowledge_base)" />
+			<arg name="action_duration"		value="0.0" />
+			<arg name="action_dispatch_topic" value="$(arg action_dispatch_topic)" />
+			<arg name="action_feedback_topic" value="$(arg action_feedback_topic)" />
+		</include>
+	</group>
+</launch>
