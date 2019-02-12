@@ -150,11 +150,12 @@ namespace KCL_rosplan {
 			}
 		}
 		else {
-			ros::spinOnce();
-			
+			// use ground truth as localised pose
+			ros::spinOnce();   // suppose to trigger costMapCallback but didn't
+			ROS_INFO("RP+: (%s) using ground truth as localised pose", params.name.c_str());
 			// clear costmaps
-			std_srvs::Empty emptySrv;
-			clear_costmaps_client.call(emptySrv);
+			// std_srvs::Empty emptySrv;
+			// clear_costmaps_client.call(emptySrv);
 
 			// set map for /amcl
 			nav_msgs::SetMap srv;
@@ -183,15 +184,6 @@ namespace KCL_rosplan {
 				return false;
 			}
 		}
-
-
-
-
-
-
-
-		// clear costmaps
-		clear_costmaps_client.call(emptySrv);
 
 		if (accurate_localisation()) {
 			ROS_INFO("RP+: (%s) action finished with low variance in position", params.name.c_str());

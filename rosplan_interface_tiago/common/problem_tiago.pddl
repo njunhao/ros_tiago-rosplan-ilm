@@ -7,6 +7,7 @@
     (object_at o2 wp2)
     (emptyhand r1)
     (person_not_found p1)
+    ; (localised r1)
 )
 (:goal (and
     (task_received p1)

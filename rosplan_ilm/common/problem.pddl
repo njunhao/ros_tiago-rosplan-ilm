@@ -12,6 +12,7 @@
 
     (emptyhand r1)
 
+    (localised r1)
 
     (object_at o1 wp1)
     (object_at o2 wp2)

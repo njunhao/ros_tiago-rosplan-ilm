@@ -1,2 +1,2 @@
-robot_at(r1 - robot wp0 - waypoint) emptyhand(r1 - robot) object_at(o1 - obj wp1 - waypoint) object_at(o2 - obj wp2 - waypoint) person_not_found(p1 - person) 
-(:objects p1 - person wp0 wp1 wp2 - waypoint o1 o2 - obj r1 - robot )
+robot_at(r1 - robot wp0 - waypoint) emptyhand(r1 - robot) localised(r1 - robot) object_at(o1 - obj wp1 - waypoint) object_at(o2 - obj wp2 - waypoint) person_not_found(p1 - person) 
+(:objects o1 o2 - obj p1 - person wp0 wp1 wp2 - waypoint r1 - robot )

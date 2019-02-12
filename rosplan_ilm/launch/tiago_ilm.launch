@@ -1,13 +1,14 @@
 <!-- ROSPlan rexd interface launch; requires turtlebot_gazebo -->
 <launch>	
 	<arg name="domain_path"				default="$(find rosplan_interface_tiago)/common/domain_tiago.ppddl" />
-	<!-- <arg name="problem_path"			default="$(find rosplan_interface_tiago)/common/problem_tiago.pddl" /> -->
-	<arg name="problem_path"			default="$(find rosplan_ilm)/common/problem.pddl" />
+	<arg name="problem_path"			default="$(find rosplan_interface_tiago)/common/problem_tiago.pddl" />
+	<!-- <arg name="problem_path"			default="$(find rosplan_ilm)/common/problem.pddl" /> -->
 
 	<arg name="world" 					default="demo_office"/>
 	<arg name="map"						default="$(find rosplan_interface_tiago)/maps/configurations/$(arg world)"/>
 	<arg name="rviz"					default="false"/>
-	<arg name="gzclient"				default="true"/>
+	<arg name="gzclient"				default="false"/>
+	<arg name="recording"				default="true"/>
 
 	<arg name="waypoint_file"			default="waypoints_start_at_top_right"/>
 	<arg name="gzpose"					default="-x -2.2 -y 7.5 -z 0 -R 0.0 -P 0.0 -Y 0.0"/>
@@ -19,7 +20,7 @@
 	<!-- <arg name="gzpose"					default="-x -3.5 -y 7.8 -z 0 -R 0.0 -P 0.0 -Y 3.14159"/> -->
 	
 
-	<arg name="use_ilm"					default="true" />
+	<arg name="use_ilm"					default="false" />
 	<arg name="use_planner"				default="false" />
 	<arg name="use_sim_action"			default="false" />
 	
@@ -44,7 +45,7 @@
 		<arg name="gzclient"		value="$(arg gzclient)"/>
 		<arg name="localization"	value="amcl"/>
 		<arg name="gzpose"			value="$(arg gzpose)"/>
-		<arg name="recording"		value="false"/>
+		<arg name="recording"		value="$(arg recording)"/>
 	</include>
 
 
@@ -52,19 +53,6 @@
 	<include file="$(find rosplan_interface_tiago)/launch/pick/pick_demo.launch">
 		<arg name="rviz"     		value="$(arg rviz)"/>
 	</include>
-
-
-<!-- 	<include file="$(find tiago_2dnav_gazebo)/launch/tiago_navigation_public.launch">
-		<arg name="robot"			value="steel"/>
-		<arg name="map"				value="$(arg map)"/>
-		<arg name="rviz"			value="$(arg rviz)"/>
-		<arg name="gzclient"		value="$(arg gzclient)"/>
-		<arg name="localization"	value="amcl"/>
-		<arg name="gzpose"			value="$(arg gzpose)"/>
-		<arg name="recording"		value="false"/>
-	</include> -->
-
-
 
 
 	<!-- ROSPlan -->
@@ -138,7 +126,7 @@
 
 		<!-- explore interface -->
 <!-- 		<node name="rosplan_interface_explore" pkg="rosplan_interface_ext_action" type="rpexplore" respawn="true" output="screen">
-			<param name="simulate" value="true" />
+			<param name="simulate" value="false" />
 			<param name="knowledge_base" value="$(arg knowledge_base)" />
 			<param name="action_server" value="/move_base" />
 			<param name="pddl_action_name" value="explore" />
@@ -181,7 +169,7 @@
 
 
 		<!-- ask person interface -->
-<!-- 		<node name="rosplan_interface_reportback" pkg="rosplan_interface_tiago" type="rptalktoperson" respawn="true" output="screen">
+		<node name="rosplan_interface_reportback" pkg="rosplan_interface_tiago" type="rptalktoperson" respawn="true" output="screen">
 			<param name="simulate" value="true" />
 			<param name="knowledge_base" value="$(arg knowledge_base)" />
 			<param name="action_server" value="/ttsDUMMYSERVER" />
@@ -191,7 +179,7 @@
 			<param name="detector_topic" value="$(arg detector_topic)" />
 			<param name="data_path" value="/" />
 			<param name="speech_text" value="Task completed." />
-		</node> -->
+		</node>
 
 
 		<!-- pickup interface -->

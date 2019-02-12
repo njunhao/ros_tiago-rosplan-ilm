@@ -1,0 +1,5 @@
+frame_id=map
+x=3.4; y=7.5; z=0; roll=0; pitch=0; yaw=0;
+x=-3; y=7.5; z= 0; roll=0; pitch=0; yaw=3.14159;
+x=-1.2; y=-1; z=0; roll=0; pitch=0; yaw=4.71239;
+x=1.1; y=0.5; z=0; roll=0; pitch=0; yaw=1.5708;
